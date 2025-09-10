@@ -1,5 +1,4 @@
 import 'dart:math' as math;
-import 'dart:ui' show FontFeature;
 
 import 'package:flutter/widgets.dart';
 
@@ -97,7 +96,7 @@ class AnimatedFlipCounter extends StatelessWidget {
   final EdgeInsets padding;
 
   const AnimatedFlipCounter({
-    Key? key,
+    super.key,
     required this.value,
     this.duration = const Duration(milliseconds: 300),
     this.negativeSignDuration = const Duration(milliseconds: 150),
@@ -114,9 +113,7 @@ class AnimatedFlipCounter extends StatelessWidget {
     this.decimalSeparator = '.',
     this.mainAxisAlignment = MainAxisAlignment.center,
     this.padding = EdgeInsets.zero,
-  })  : assert(fractionDigits >= 0, 'fractionDigits must be non-negative'),
-        assert(wholeDigits >= 0, 'wholeDigits must be non-negative'),
-        super(key: key);
+  }) : assert(fractionDigits >= 0, 'fractionDigits must be non-negative');
 
   @override
   Widget build(BuildContext context) {
@@ -149,35 +146,52 @@ class AnimatedFlipCounter extends StatelessWidget {
     // more significant digits. For example, 123 add 10 becomes 133. In this
     // case, 1 stays the same, 2 flips into a 3, but 3 needs to flip 10 times
     // to reach 3 again, instead of staying static.
-    List<int> digits = value == 0 ? [0] : [];
+    List<int> digits = [];
     int v = value.abs();
-    while (v > 0) {
-      digits.add(v);
-      v = v ~/ 10;
-    }
-    while (digits.length < wholeDigits + fractionDigits) {
-      digits.add(0); // padding leading zeroes
+
+    // Always create at least wholeDigits + fractionDigits number of digits
+    // even when value is 0, to ensure smooth animation from 0 to any value
+    if (v == 0) {
+      // For zero value, create cumulative zeros for proper animation
+      for (int i = 0; i < wholeDigits + fractionDigits; i++) {
+        digits.add(0);
+      }
+    } else {
+      while (v > 0) {
+        digits.add(v);
+        v = v ~/ 10;
+      }
+      while (digits.length < wholeDigits + fractionDigits) {
+        digits.add(0); // padding leading zeroes
+      }
     }
     digits = digits.reversed.toList(growable: false);
 
     // Calculate how many trailing zeroes to hide
     int visibleFractionDigits = fractionDigits;
     if (removeTrailingZeroes && fractionDigits > 0) {
-      // Find the last non-zero digit in the fractional part
-      int lastNonZeroIndex = digits.length - 1;
-      for (int i = digits.length - 1;
-          i >= digits.length - fractionDigits;
-          i--) {
-        if (digits[i] != 0) {
-          lastNonZeroIndex = i;
-          break;
+      // Convert the value to a string to properly identify trailing zeros
+      String valueStr = this.value.toStringAsFixed(fractionDigits);
+
+      // Find the decimal point
+      int decimalIndex = valueStr.indexOf('.');
+      if (decimalIndex != -1) {
+        String fractionPart = valueStr.substring(decimalIndex + 1);
+
+        // Count trailing zeros
+        int trailingZeros = 0;
+        for (int i = fractionPart.length - 1; i >= 0; i--) {
+          if (fractionPart[i] == '0') {
+            trailingZeros++;
+          } else {
+            break;
+          }
         }
+
+        // Calculate visible fraction digits
+        visibleFractionDigits = fractionDigits - trailingZeros;
+        visibleFractionDigits = visibleFractionDigits.clamp(0, fractionDigits);
       }
-      // Calculate how many fraction digits should be visible
-      visibleFractionDigits =
-          lastNonZeroIndex - (digits.length - fractionDigits) + 1;
-      // Ensure we don't go below 0
-      visibleFractionDigits = visibleFractionDigits.clamp(0, fractionDigits);
     }
 
     // Generate the widgets needed for digits before the decimal point.
@@ -289,7 +303,7 @@ class _SingleDigitFlipCounter extends StatelessWidget {
   final bool visible; // user can choose to hide leading zeroes
 
   const _SingleDigitFlipCounter({
-    Key? key,
+    super.key,
     required this.value,
     required this.duration,
     required this.curve,
@@ -297,7 +311,7 @@ class _SingleDigitFlipCounter extends StatelessWidget {
     required this.color,
     required this.padding,
     this.visible = true,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
