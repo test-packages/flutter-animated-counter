@@ -1,5 +1,39 @@
+import 'dart:math';
+
 import 'package:animated_flip_counter/animated_flip_counter.dart';
 import 'package:flutter/material.dart';
+
+// Extension to mimic your app's calculateDecimalPrecision
+extension DecimalPrecisionExtension on num {
+  int calculateDecimalPrecision() {
+    const defaultDecimalPrecision = 2;
+    const targetSignificantDigits = 4;
+    const maxDecimalPrecision = 9;
+
+    if (this == 0) return 0; // This is the problematic case
+
+    final absValue = abs();
+
+    return min(
+      max(
+        targetSignificantDigits - (log(absValue) / log(10)).floor(),
+        defaultDecimalPrecision,
+      ),
+      maxDecimalPrecision,
+    );
+  }
+}
+
+// Mock format symbols
+class MockFormatSymbols {
+  final String decimalSeparator;
+  final String thousandSeparator;
+
+  MockFormatSymbols({
+    this.decimalSeparator = '.',
+    this.thousandSeparator = ',',
+  });
+}
 
 void main() {
   runApp(const MyApp());
@@ -173,6 +207,57 @@ class _MyHomePageState extends State<MyHomePage> {
               textStyle: const TextStyle(fontSize: 28, color: Colors.green),
             ),
 
+            // Test case that mimics your app's usage
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Divider(),
+            ),
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text(
+                'Real App Scenario Test (Dynamic Precision):',
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.red),
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text(
+                'This mimics your app: 0 → fractionDigits=0, other values → fractionDigits>0',
+                style: TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+            ),
+            Builder(
+              builder: (context) {
+                final formatSymbols = MockFormatSymbols();
+                return AnimatedFlipCounter(
+                  key: const ValueKey('balance_counter'), // Fixed key
+                  value: _value,
+                  duration: const Duration(milliseconds: 640),
+                  curve: Curves.easeOutCubic,
+                  textStyle: const TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black,
+                  ),
+                  fractionDigits: _value.calculateDecimalPrecision(),
+                  hideLeadingZeroes: true,
+                  removeTrailingZeroes: true,
+                  decimalSeparator: formatSymbols.decimalSeparator,
+                  thousandSeparator: formatSymbols.thousandSeparator,
+                );
+              },
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                'Current value: $_value, fractionDigits: ${_value.calculateDecimalPrecision()}',
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+            ),
+
             const Padding(
               padding: EdgeInsets.all(16),
               child: Divider(),
@@ -215,6 +300,41 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                   child: const Text('Set to 1234.56'),
                   onPressed: () => setState(() => _value = 1234.56),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Balance Scenario Test (like your app):',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.purple,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Account A\n(\$15.534)'),
+                  onPressed: () => setState(() => _value = 15.534),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.teal,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Account B\n(\$0)'),
+                  onPressed: () => setState(() => _value = 0.0),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.indigo,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Account C\n(\$0.001)'),
+                  onPressed: () => setState(() => _value = 0.001),
                 ),
               ],
             ),
