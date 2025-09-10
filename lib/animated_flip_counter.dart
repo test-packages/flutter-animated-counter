@@ -146,15 +146,29 @@ class AnimatedFlipCounter extends StatelessWidget {
     // more significant digits. For example, 123 add 10 becomes 133. In this
     // case, 1 stays the same, 2 flips into a 3, but 3 needs to flip 10 times
     // to reach 3 again, instead of staying static.
-    List<int> digits = value == 0 ? [0] : [];
+
+    // Always create the minimum required number of digits
+    final totalDigits = math.max(wholeDigits + fractionDigits, 1);
+    List<int> digits = [];
+
     int v = value.abs();
-    while (v > 0) {
-      digits.add(v);
-      v = v ~/ 10;
+
+    // Build cumulative values for animation
+    if (v == 0) {
+      // For zero, create proper cumulative structure
+      for (int i = 0; i < totalDigits; i++) {
+        digits.add(0);
+      }
+    } else {
+      // Build cumulative digits
+      while (v > 0 || digits.length < totalDigits) {
+        digits.add(v);
+        if (v > 0) {
+          v = v ~/ 10;
+        }
+      }
     }
-    while (digits.length < wholeDigits + fractionDigits) {
-      digits.add(0); // padding leading zeroes
-    }
+
     digits = digits.reversed.toList(growable: false);
 
     // Calculate how many trailing zeroes to hide
