@@ -163,28 +163,21 @@ class AnimatedFlipCounter extends StatelessWidget {
     // Calculate how many trailing zeroes to hide
     int visibleFractionDigits = fractionDigits;
     if (removeTrailingZeroes && fractionDigits > 0) {
-      // Convert the value to a string to properly identify trailing zeros
-      String valueStr = this.value.toStringAsFixed(fractionDigits);
-
-      // Find the decimal point
-      int decimalIndex = valueStr.indexOf('.');
-      if (decimalIndex != -1) {
-        String fractionPart = valueStr.substring(decimalIndex + 1);
-
-        // Count trailing zeros
-        int trailingZeros = 0;
-        for (int i = fractionPart.length - 1; i >= 0; i--) {
-          if (fractionPart[i] == '0') {
-            trailingZeros++;
-          } else {
-            break;
-          }
+      // Find the last non-zero digit in the fractional part
+      int lastNonZeroIndex = digits.length - 1;
+      for (int i = digits.length - 1;
+          i >= digits.length - fractionDigits;
+          i--) {
+        if (digits[i] != 0) {
+          lastNonZeroIndex = i;
+          break;
         }
-
-        // Calculate visible fraction digits
-        visibleFractionDigits = fractionDigits - trailingZeros;
-        visibleFractionDigits = visibleFractionDigits.clamp(0, fractionDigits);
       }
+      // Calculate how many fraction digits should be visible
+      visibleFractionDigits =
+          lastNonZeroIndex - (digits.length - fractionDigits) + 1;
+      // Ensure we don't go below 0
+      visibleFractionDigits = visibleFractionDigits.clamp(0, fractionDigits);
     }
 
     // Generate the widgets needed for digits before the decimal point.

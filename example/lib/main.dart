@@ -35,22 +35,51 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Scrollbar(
         child: ListView(
           children: [
-            // AnimatedFlipCounter(
-            //   value: _value,
-            // ),
-            // AnimatedFlipCounter(
-            //   value: 10000000 + _value,
-            //   fractionDigits: 2,
-            //   wholeDigits: 8,
-            //   hideLeadingZeroes: true,
-            //   thousandSeparator: ',',
-            // ),
-            // AnimatedFlipCounter(
-            //   value: 10000000 + _value,
-            //   fractionDigits: 2,
-            //   wholeDigits: 8,
-            //   hideLeadingZeroes: true,
-            // ),
+            // Basic counter test
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text(
+                'Basic Counter (0 → other values):',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
+            AnimatedFlipCounter(
+              value: _value,
+              textStyle: const TextStyle(fontSize: 32, color: Colors.blue),
+            ),
+            // Currency format test
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text(
+                'Currency Format Test (\$0.00 → \$X.XX):',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
+            AnimatedFlipCounter(
+              value: _value,
+              prefix: '\$',
+              fractionDigits: 2,
+              wholeDigits: 4,
+              hideLeadingZeroes: true,
+              thousandSeparator: ',',
+              textStyle: const TextStyle(fontSize: 24, color: Colors.green),
+            ),
+            // Large numbers test
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text(
+                'Large Numbers Test (millions):',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
+            AnimatedFlipCounter(
+              value: 1000000 + _value,
+              fractionDigits: 2,
+              wholeDigits: 8,
+              hideLeadingZeroes: true,
+              thousandSeparator: ',',
+              textStyle: const TextStyle(fontSize: 20, color: Colors.purple),
+            ),
             // AnimatedFlipCounter(
             //   value: 10000000 + _value,
             //   fractionDigits: 2,
@@ -105,6 +134,13 @@ class _MyHomePageState extends State<MyHomePage> {
                 ],
               ),
             ),
+            // AnimatedFlipCounter(
+            //   value: (_value * 10000) + 0.48,
+            //   fractionDigits: 2,
+            //   wholeDigits: 8,
+            //   hideLeadingZeroes: true,
+            //   thousandSeparator: ',',
+            // ),
             // Test removeTrailingZeroes functionality
             AnimatedFlipCounter(
               value: _value,
@@ -112,19 +148,75 @@ class _MyHomePageState extends State<MyHomePage> {
               removeTrailingZeroes: true,
               textStyle: const TextStyle(fontSize: 24, color: Colors.orange),
             ),
+            // AnimatedFlipCounter(
+            //   value: _value,
+            //   fractionDigits: 4,
+            //   removeTrailingZeroes: false,
+            //   textStyle: const TextStyle(fontSize: 24, color: Colors.red),
+            // ),
+
+            // Test animation from 0 to other values
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text(
+                'Animation from \$0 test:',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
             AnimatedFlipCounter(
               value: _value,
-              fractionDigits: 4,
-              removeTrailingZeroes: false,
-              textStyle: const TextStyle(fontSize: 24, color: Colors.red),
+              prefix: '\$',
+              fractionDigits: 3,
+              wholeDigits: 4,
+              hideLeadingZeroes: true,
+              thousandSeparator: ',',
+              textStyle: const TextStyle(fontSize: 28, color: Colors.green),
             ),
+
             const Padding(
               padding: EdgeInsets.all(16),
               child: Divider(),
             ),
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text(
+                'Test Controls:',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [0.01, 0.48, 1, 5, 400].map(_buildButtons).toList(),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Reset to 0'),
+                  onPressed: () => setState(() => _value = 0.0),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Set to 3.123'),
+                  onPressed: () => setState(() => _value = 3.123),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Set to 1234.56'),
+                  onPressed: () => setState(() => _value = 1234.56),
+                ),
+              ],
             ),
           ],
         ),
