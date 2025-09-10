@@ -146,15 +146,12 @@ class AnimatedFlipCounter extends StatelessWidget {
     // more significant digits. For example, 123 add 10 becomes 133. In this
     // case, 1 stays the same, 2 flips into a 3, but 3 needs to flip 10 times
     // to reach 3 again, instead of staying static.
-    List<int> digits = [];
+    List<int> digits = value == 0 ? [0] : [];
     int v = value.abs();
-
-    // Always create at least wholeDigits + fractionDigits number of digits
-    // even when value is 0, to ensure smooth animation from 0 to any value
-    do {
+    while (v > 0) {
       digits.add(v);
       v = v ~/ 10;
-    } while (v > 0);
+    }
     while (digits.length < wholeDigits + fractionDigits) {
       digits.add(0); // padding leading zeroes
     }
