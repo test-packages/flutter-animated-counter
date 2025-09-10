@@ -151,19 +151,12 @@ class AnimatedFlipCounter extends StatelessWidget {
 
     // Always create at least wholeDigits + fractionDigits number of digits
     // even when value is 0, to ensure smooth animation from 0 to any value
-    if (v == 0) {
-      // For zero value, create cumulative zeros for proper animation
-      for (int i = 0; i < wholeDigits + fractionDigits; i++) {
-        digits.add(0);
-      }
-    } else {
-      while (v > 0) {
-        digits.add(v);
-        v = v ~/ 10;
-      }
-      while (digits.length < wholeDigits + fractionDigits) {
-        digits.add(0); // padding leading zeroes
-      }
+    do {
+      digits.add(v);
+      v = v ~/ 10;
+    } while (v > 0);
+    while (digits.length < wholeDigits + fractionDigits) {
+      digits.add(0); // padding leading zeroes
     }
     digits = digits.reversed.toList(growable: false);
 
