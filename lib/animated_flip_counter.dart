@@ -1,9 +1,8 @@
 import 'dart:math' as math;
-import 'dart:ui' show FontFeature;
 
 import 'package:flutter/widgets.dart';
 
-class AnimatedFlipCounter extends StatefulWidget {
+class AnimatedFlipCounter extends StatelessWidget {
   /// The value of this counter.
   ///
   /// When a new value is specified, the counter will automatically animate
@@ -117,39 +116,12 @@ class AnimatedFlipCounter extends StatefulWidget {
   }) : assert(fractionDigits >= 0, 'fractionDigits must be non-negative');
 
   @override
-  State<AnimatedFlipCounter> createState() => _AnimatedFlipCounterState();
-}
-
-class _AnimatedFlipCounterState extends State<AnimatedFlipCounter> {
-  late num _previousValue;
-  late int _previousFractionDigits;
-
-  @override
-  void initState() {
-    super.initState();
-    _previousValue = widget.value;
-    _previousFractionDigits = widget.fractionDigits;
-  }
-
-  @override
-  void didUpdateWidget(AnimatedFlipCounter oldWidget) {
-    super.didUpdateWidget(oldWidget);
-
-    // If fractionDigits changed, we need to handle it carefully
-    if (oldWidget.fractionDigits != widget.fractionDigits) {
-      // Keep the previous value for smooth transition
-      _previousValue = oldWidget.value;
-      _previousFractionDigits = oldWidget.fractionDigits;
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
     // Merge the text style with the default style, and request tabular figures
     // for consistent width of digits (if supported by the font).
     final style = DefaultTextStyle.of(context)
         .style
-        .merge(widget.textStyle)
+        .merge(textStyle)
         .merge(const TextStyle(fontFeatures: [FontFeature.tabularFigures()]));
 
     // Layout number "0" (probably the widest digit) to see its size
@@ -163,13 +135,9 @@ class _AnimatedFlipCounterState extends State<AnimatedFlipCounter> {
     // `Opacity` and `AnimatedOpacity` widget, for better performance.
     final Color color = style.color ?? const Color(0xffff0000);
 
-    // Use the maximum fractionDigits to ensure consistent animation
-    final maxFractionDigits =
-        math.max(widget.fractionDigits, _previousFractionDigits);
-
     // Convert the decimal value to int. For example, if we want 2 decimal
     // places, we will convert 5.21 into 521.
-    final int value = (widget.value * math.pow(10, maxFractionDigits)).round();
+    final int value = (this.value * math.pow(10, fractionDigits)).round();
 
     // Split the integer value into separate digits.
     // For example, to draw 123, we split it into [1, 12, 123].
@@ -179,8 +147,8 @@ class _AnimatedFlipCounterState extends State<AnimatedFlipCounter> {
     // case, 1 stays the same, 2 flips into a 3, but 3 needs to flip 10 times
     // to reach 3 again, instead of staying static.
 
-    // Always create the minimum required number of digits using maxFractionDigits
-    final totalDigits = math.max(widget.wholeDigits + maxFractionDigits, 1);
+    // Always create the minimum required number of digits
+    final totalDigits = math.max(wholeDigits + fractionDigits, 1);
     List<int> digits = value == 0 ? [0] : [];
     int v = value.abs();
 
@@ -194,58 +162,66 @@ class _AnimatedFlipCounterState extends State<AnimatedFlipCounter> {
     digits = digits.reversed.toList(growable: false);
 
     // Calculate how many trailing zeroes to hide
-    int visibleFractionDigits = widget.fractionDigits;
-    if (widget.removeTrailingZeroes && widget.fractionDigits > 0) {
-      // Convert the value to a string to properly identify trailing zeros
-      String valueStr = widget.value.toStringAsFixed(widget.fractionDigits);
+    int visibleFractionDigits = fractionDigits;
+    if (removeTrailingZeroes && fractionDigits > 0) {
+      if (this.value == 0) {
+        // Special case: if value is exactly 0, show no fraction digits
+        visibleFractionDigits = 0;
+      } else {
+        // Use the original string representation to find actual trailing zeros
+        String valueStr = this.value.toString();
 
-      // Find the decimal point
-      int decimalIndex = valueStr.indexOf('.');
-      if (decimalIndex != -1) {
-        String fractionPart = valueStr.substring(decimalIndex + 1);
+        // Find decimal point
+        int decimalIndex = valueStr.indexOf('.');
+        if (decimalIndex != -1 && decimalIndex < valueStr.length - 1) {
+          String originalFractionPart = valueStr.substring(decimalIndex + 1);
 
-        // Count trailing zeros
-        int trailingZeros = 0;
-        for (int i = fractionPart.length - 1; i >= 0; i--) {
-          if (fractionPart[i] == '0') {
-            trailingZeros++;
-          } else {
-            break;
+          // Count significant digits (non-trailing zeros) in original fraction part
+          int significantDigits = originalFractionPart.length;
+          for (int i = originalFractionPart.length - 1; i >= 0; i--) {
+            if (originalFractionPart[i] == '0') {
+              significantDigits--;
+            } else {
+              break;
+            }
           }
-        }
 
-        // Calculate visible fraction digits
-        visibleFractionDigits = widget.fractionDigits - trailingZeros;
-        visibleFractionDigits =
-            visibleFractionDigits.clamp(0, widget.fractionDigits);
+          // Limit to our fractionDigits setting
+          visibleFractionDigits = math.min(significantDigits, fractionDigits);
+        } else {
+          // No decimal point means it's a whole number
+          visibleFractionDigits = 0;
+        }
       }
+
+      visibleFractionDigits = visibleFractionDigits.clamp(0, fractionDigits);
     }
 
     // Generate the widgets needed for digits before the decimal point.
     final integerWidgets = <Widget>[];
-    for (int i = 0; i < digits.length - maxFractionDigits; i++) {
+    for (int i = 0; i < digits.length - fractionDigits; i++) {
       final digit = _SingleDigitFlipCounter(
         key: ValueKey(digits.length - i),
         value: digits[i].toDouble(),
-        duration: widget.duration,
-        curve: widget.curve,
+        duration: duration,
+        curve: curve,
         size: prototypeDigit.size,
         color: color,
-        padding: widget.padding,
+        padding: padding,
         // We might want to hide leading zeroes. The way we split digits, only
         // leading zeroes have "true zero" value. E.g. five hundred, 0500 is
         // split into [0, 5, 50, 500]. Since 50 and 500 are not 0, they are
         // always visible. But we should not show 0.48 as .48 so the last
         // zero before decimal point is always visible.
-        visible: widget.hideLeadingZeroes
-            ? digits[i] != 0 || i == digits.length - maxFractionDigits - 1
+        visible: hideLeadingZeroes
+            ? digits[i] != 0 || i == digits.length - fractionDigits - 1
             : true,
       );
       integerWidgets.add(digit);
     }
 
     // Insert "thousand separator" widgets if needed.
-    if (widget.thousandSeparator != null) {
+    if (thousandSeparator != null) {
       // Find the first digit that's NOT a HIDDEN leading zero.
       // For example, "000123", if users want to hide leading zeroes, then
       // the first visible digit is the "1", at index 3.
@@ -254,7 +230,7 @@ class _AnimatedFlipCounterState extends State<AnimatedFlipCounter> {
       // This is so we know when to stop inserting separators. We don't want
       // something like ",,,123,456" if leading zeroes are hidden.
       int firstVisibleDigitIndex = 0;
-      if (widget.hideLeadingZeroes) {
+      if (hideLeadingZeroes) {
         // Find the first digit that's not zero.
         firstVisibleDigitIndex = digits.indexWhere((d) => d != 0);
         // If all digits are zero, then the first visible digit is the last one.
@@ -268,7 +244,7 @@ class _AnimatedFlipCounterState extends State<AnimatedFlipCounter> {
       int counter = 0;
       for (int i = integerWidgets.length; i > firstVisibleDigitIndex; i--) {
         if (counter > 0 && counter % 3 == 0) {
-          integerWidgets.insert(i, Text(widget.thousandSeparator!));
+          integerWidgets.insert(i, Text(thousandSeparator!));
         }
         counter++;
       }
@@ -278,16 +254,16 @@ class _AnimatedFlipCounterState extends State<AnimatedFlipCounter> {
       style: style,
       child: Row(
         mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: widget.mainAxisAlignment,
+        mainAxisAlignment: mainAxisAlignment,
         // Even in RTL languages, numbers should always be displayed LTR.
         textDirection: TextDirection.ltr,
         children: [
-          if (widget.prefix != null) Text(widget.prefix!),
+          if (prefix != null) Text(prefix!),
           // Draw the negative sign (-), if exists
           ClipRect(
             child: TweenAnimationBuilder(
               // Animate the negative sign (-) appearing and disappearing
-              duration: widget.negativeSignDuration,
+              duration: negativeSignDuration,
               tween: Tween(end: value < 0 ? 1.0 : 0.0),
               builder: (_, double v, __) => Center(
                 widthFactor: v,
@@ -295,25 +271,25 @@ class _AnimatedFlipCounterState extends State<AnimatedFlipCounter> {
               ),
             ),
           ),
-          if (widget.infix != null) Text(widget.infix!),
+          if (infix != null) Text(infix!),
           // Draw digits before the decimal point
           ...integerWidgets,
           // Draw the decimal point only if there are visible fraction digits
-          if (visibleFractionDigits > 0) Text(widget.decimalSeparator),
+          if (visibleFractionDigits > 0) Text(decimalSeparator),
           // Draw digits after the decimal point
-          for (int i = digits.length - maxFractionDigits;
-              i < digits.length - maxFractionDigits + visibleFractionDigits;
+          for (int i = digits.length - fractionDigits;
+              i < digits.length - fractionDigits + visibleFractionDigits;
               i++)
             _SingleDigitFlipCounter(
               key: ValueKey('decimal$i'),
               value: digits[i].toDouble(),
-              duration: widget.duration,
-              curve: widget.curve,
+              duration: duration,
+              curve: curve,
               size: prototypeDigit.size,
               color: color,
-              padding: widget.padding,
+              padding: padding,
             ),
-          if (widget.suffix != null) Text(widget.suffix!),
+          if (suffix != null) Text(suffix!),
         ],
       ),
     );

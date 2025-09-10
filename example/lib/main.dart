@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:math' as math;
 
 import 'package:animated_flip_counter/animated_flip_counter.dart';
 import 'package:flutter/material.dart';
@@ -242,9 +243,10 @@ class _MyHomePageState extends State<MyHomePage> {
                     fontWeight: FontWeight.w600,
                     color: Colors.black,
                   ),
-                  fractionDigits: _value.calculateDecimalPrecision(),
+                  fractionDigits: 9, // Fixed max digits instead of dynamic
                   hideLeadingZeroes: true,
-                  removeTrailingZeroes: true,
+                  removeTrailingZeroes:
+                      true, // This will hide unnecessary zeros
                   decimalSeparator: formatSymbols.decimalSeparator,
                   thousandSeparator: formatSymbols.thousandSeparator,
                 );
@@ -252,9 +254,29 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             Padding(
               padding: const EdgeInsets.all(8.0),
-              child: Text(
-                'Current value: $_value, fractionDigits: ${_value.calculateDecimalPrecision()}',
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
+              child: Column(
+                children: [
+                  Text(
+                    'Current value: $_value',
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                  Text(
+                    'Dynamic fractionDigits: ${_value.calculateDecimalPrecision()}',
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                  const Text(
+                    'Fixed fractionDigits: 9',
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                  Text(
+                    'Integer representation: ${(_value * math.pow(10, 9)).round()}',
+                    style: const TextStyle(fontSize: 12, color: Colors.red),
+                  ),
+                  Text(
+                    'Original string: ${_value.toString()}',
+                    style: const TextStyle(fontSize: 12, color: Colors.blue),
+                  ),
+                ],
               ),
             ),
 
@@ -333,8 +355,8 @@ class _MyHomePageState extends State<MyHomePage> {
                     backgroundColor: Colors.indigo,
                     foregroundColor: Colors.white,
                   ),
-                  child: const Text('Account C\n(\$0.001)'),
-                  onPressed: () => setState(() => _value = 0.001),
+                  child: const Text('Account C\n(\$0.005471)'),
+                  onPressed: () => setState(() => _value = 0.005471),
                 ),
               ],
             ),
